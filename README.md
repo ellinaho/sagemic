@@ -3,16 +3,21 @@ Real-time detection and classification of bioacoustic events on field devices bu
 
 ## SageMic
 Currently: sagemic_local.py
-Sagemic is an acoustic inference device that runs Birdnet actively using a USB microphone and stores detections locally. 
+Sagemic is an acoustic inference device that runs Birdnet continuously and stores detections locally. 
 
-Current versions in development include LTE enabled and Wifi Halow versions where detections are sent to an MQTT Broker.
+Current versions in development include LTE enabled and Wifi Halow versions where detections are sent through an MQTT Broker.
 
-Clone this repo on your Pi 4B (Full Desktop version of Trixie OS)
+Can use different microphones, but has been tested with an Audiomoth set to 48000Hz, or an INMP441 mic (additional setup instructions below).
 
-In the repo, create a python environment. If using Trixie, Python3.11 needs to be
-installed because Tensorflow is not yet fully comptaible with Python3.13, which is what Trixie has. 
+### Installation
+Flash a Bookworm Desktop OS for Raspberry Pi 4B. Trixie and Pi 5 compatible, but Trixie requires 1 extra step.
+
+If using Trixie, Python3.11 needs to be
+installed because Tensorflow is not yet fully comptaible with Python3.13, which is what Trixie has.
 
 To create a non-replacing install of Python3.11, run these commands to build an alternate install of Python3.11 we can use in our venv.
+
+If using Bookworm, skip to the step where we create the python environment.
 
 ```
 su - root
@@ -21,23 +26,38 @@ cd ~ && wget https://www.python.org/ftp/python/3.11.13/Python-3.11.13.tar.xz
 tar xvf Python-3.11.13.tar.xz && cd Python-3.11.13
 ./configure --enable-optimizations --with-ensurepip=install
 make -j $(nproc) && make altinstall
+```
 
+If using Trixie, and you did the above altinstall, use this command to create the env.
+```
 python3.11 -m venv .sagemic
+```
 
+If using Bookworm, you can just use python3
+```
+python3 -m venv .sagemic
+```
+
+Bookworm and Trixie instructions converge here:
+
+```
 source .sagemic/bin/activate
-```
 
-```
+git clone https://github.com/conservationtechlab/sagemic.git
 cd ~/sagemic
 pip install -e .
 sudo apt-get install libportaudio2
 ```
 
-Change the save path to either a mounted drive (if running on a local network) or the desired local storage.
+To test, run 'run_birdnet_on_microphone_stream.py' inside /feature_tests.
 
-##TODO Make method for periodic data transfer when service is intermittent.
+To run continuously on boot, make a copy of config/example_config/yaml and follow the instructions inside /systemd to have sagemic_local.service
+run the sagemic software continuously on boots. 
 
-Inference runs on board the remote device (raspberry pi).
+### Scan Send
+See the readme in /systemd for instructions to enable the scansend service that will periodically check for new audio clips and transmit them over
+MQTTS. See this repo [SageBRUSH-Xylem](https://github.com/conservationtechlab/sagebrush-xylem) for instructions on how to set up the MQTT Broker service and generate new keys needed to paste in the config file to allow for secure transmission
+of audio clips.
 
 
 ## Birbler

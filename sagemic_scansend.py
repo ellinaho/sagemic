@@ -35,9 +35,8 @@ def main():
     broker = config["MQTT"]["BROKER"]
     topic = config["MQTT"]["BASE_TOPIC"] + "/" + config["MQTT"]["DEVICE"]
     path_to_ca_pem = config["PATHS"]["PATH_TO_CA_PEM"]
-    session_id = config["MQTT"]["SESSION_ID"]
-    user = config["MQTT"]["USER"]
-    password = config["MQTT"]["PASS"]
+    path_to_crt = config["PATHS"]["PATH_TO_CRT"]
+    path_to_key = config["PATHS"]["PATH_TO_KEY"]
 
     db_path = os.path.join(base_path, "detections.db")
 
@@ -64,8 +63,8 @@ def main():
     # use certificate.pem to authenticate msg with port 8883
     client.tls_set(
         ca_certs=path_to_ca_pem,
-        certfile=None,
-        keyfile=None,
+        certfile=path_to_crt,
+        keyfile=path_to_key,
         cert_reqs=ssl.CERT_REQUIRED,
         tls_version=ssl.PROTOCOL_TLS,
     )
@@ -80,18 +79,18 @@ def main():
             print(f"Warning: {filepath} found in DB but missing on disk.")
             continue
 
-        # get .wav filename from filepath
+        # get .flac filename from filepath
         filename = os.path.basename(filepath)
 
         # make dynamic topic
         dynamic_topic = f"{topic}/{filename}"
 
         try:
-            with open(filepath, "rb") as wav_file:  # open in raw binary mode
-                wav_data = wav_file.read()
+            with open(filepath, "rb") as flac_file:  # open in raw binary mode
+                flac_data = flac_file.read()
                 result = client.publish(
                     dynamic_topic,
-                    bytearray(wav_data),
+                    bytearray(flac_data),
                     qos=1
                 )
                 result.wait_for_publish()
